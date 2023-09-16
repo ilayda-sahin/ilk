@@ -1,6 +1,6 @@
 pipeline {
     agent any
-    
+
     stages {
         stage('Checkout') {
             steps {
@@ -8,7 +8,7 @@ pipeline {
                 checkout scm
             }
         }
-        
+
         stage('Install Grype') {
             steps {
                 // Grype'ı kurmak için gerekli adımlar
@@ -18,15 +18,12 @@ pipeline {
 
         stage('Scan for Vulnerabilities') {
             steps {
-                // Projenizin dizinine gidin (bu adımı projenizin yapısına göre ayarlayın)
-                dir('your_project_directory') {
-                    // Grype ile güvenlik taraması yapın
-                    sh 'grype -r .'
-                }
+                // Grype ile güvenlik taraması yapın (projenizin dizinini ayarlayın)
+                sh 'grype -r .'
             }
         }
     }
-    
+
     post {
         always {
             // Tarama sonuçlarını kaydetmek için gerekli adımlar
