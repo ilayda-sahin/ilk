@@ -1,46 +1,36 @@
 pipeline {
     agent any
-
+    
     stages {
         stage('Checkout') {
             steps {
-                // Kod deposundan projeyi çek
+                // Kod deposundan kodu çek
                 checkout scm
             }
         }
-
-        stage('Build and Scan') {
+        
+        stage('Install Grype') {
             steps {
-                // Java projeyi derle (Maven kullanılacak varsayılan olarak)
-                maven 'Maven'
-                sh 'mvn clean install'
+                // Grype'ı kurmak için gerekli adımlar
+                sh 'curl -sSfL https://get.grype.io | sudo sh'
+            }
+        }
 
-                // OWASP Dependency-Check ile tarama yap
-                script {
-                    def dependencyCheckCmd = """
-                        dependency-check-cli 
-                        --scan . 
-                        --format HTML 
-                        --project "My Java Project" 
-                        --out .dependency-check-report
-                    """
-                    def scanResult = sh(script: dependencyCheckCmd, returnStatus: true)
-                    
-                    // Tarama başarılı ise devam et, değilse hata ver
-                    if (scanResult == 0) {
-                        echo 'Kod taraması başarılı!'
-                    } else {
-                        error 'Kod taraması başarısız!'
-                    }
+        stage('Scan for Vulnerabilities') {
+            steps {
+                // Projenizin dizinine gidin (bu adımı projenizin yapısına göre ayarlayın)
+                dir('your_project_directory') {
+                    // Grype ile güvenlik taraması yapın
+                    sh 'grype -r .'
                 }
             }
         }
     }
-
+    
     post {
         always {
-            // Her durumda tarama raporlarını arşivle ve temizle
-            archiveArtifacts artifacts: '.dependency-check-report/*', allowEmptyArchive: true
+            // Tarama sonuçlarını kaydetmek için gerekli adımlar
+            archiveArtifacts artifacts: 'grype-results.json', allowEmptyArchive: true
         }
     }
 }
