@@ -4,22 +4,32 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Proje kodunu al
+                // Kod deposundan projeyi çek
                 checkout scm
             }
         }
 
-        stage('Grype Scan') {
+        stage('Build and Scan') {
             steps {
-                script {
-                    // Grype'ı çalıştır ve sonuçları bir dosyaya kaydet
-                    def grypeResult = sh(script: 'grype -o grype-report.json .', returnStatus: true)
+                // Java projeyi derle (Maven kullanılacak varsayılan olarak)
+                sh 'mvn clean install'
 
-                    // Grype taraması başarılı bir şekilde tamamlandı mı kontrol et
-                    if (grypeResult == 0) {
-                        echo "Grype taraması başarılı bir şekilde tamamlandı."
+                // OWASP Dependency-Check ile tarama yap
+                script {
+                    def dependencyCheckCmd = """
+                        dependency-check-cli 
+                        --scan . 
+                        --format HTML 
+                        --project "My Java Project" 
+                        --out .dependency-check-report
+                    """
+                    def scanResult = sh(script: dependencyCheckCmd, returnStatus: true)
+                    
+                    // Tarama başarılı ise devam et, değilse hata ver
+                    if (scanResult == 0) {
+                        echo 'Kod taraması başarılı!'
                     } else {
-                        error "Grype taraması başarısız oldu. Hata kodu: ${grypeResult}"
+                        error 'Kod taraması başarısız!'
                     }
                 }
             }
@@ -28,9 +38,8 @@ pipeline {
 
     post {
         always {
-            // Grype taraması sonuçlarını kaydet ve görüntüle
-            archiveArtifacts artifacts: 'grype-report.json', allowEmptyArchive: true
-            junit 'grype-report.json'
+            // Her durumda tarama raporlarını arşivle ve temizle
+            archiveArtifacts artifacts: '.dependency-check-report/*', allowEmptyArchive: true
         }
     }
 }
