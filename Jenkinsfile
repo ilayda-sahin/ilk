@@ -18,10 +18,15 @@ pipeline {
 
         stage('Scan for Vulnerabilities') {
             steps {
-                // Grype ile güvenlik taraması yapın (projenizin dizinini ayarlayın)
-                sh 'grype -r .'
-            }
+                script {
+                def grypeOutput = sh(script: 'grype -r .', returnStatus: true)
+                if (grypeOutput != 0) {
+                error "Grype taraması başarısız oldu. Hata kodu: ${grypeOutput}"
+            }       
         }
+    }
+}
+
     }
 
     post {
