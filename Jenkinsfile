@@ -12,6 +12,7 @@ pipeline {
         stage('Build and Scan') {
             steps {
                 // Java projeyi derle (Maven kullanılacak varsayılan olarak)
+                maven 'Maven'
                 sh 'mvn clean install'
 
                 // OWASP Dependency-Check ile tarama yap
