@@ -4,54 +4,22 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // GitHub reposunun kodunu bu adımda alın
-                checkout([$class: 'GitSCM', branches: [[name: '*/main']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'your-github-credentials', url: 'https://github.com/yourusername/your-repo.git']]])
+                checkout scm
             }
         }
         
-        stage('Build') {
+        stage('Install Dependencies') {
             steps {
-                // Projeyi derleme komutları burada olur
-                sh 'make build' // Örnek bir derleme komutu
+                sh 'npm install' // Node.js projeniz için bağımlılıkları yükleyin
             }
         }
         
-        stage('SonarQube Scan') {
+        stage('SonarQube Analysis') {
             steps {
-                script {
-                    def scannerHome = tool name: 'SonarQube Scanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
-                    def scannerCmd = "${scannerHome}/bin/sonar-scanner"
-                    sh """
-                        ${scannerCmd} -Dsonar.host.url=http://sonarqube_server_url:9000 -Dsonar.login=your-sonar-token -Dsonar.projectKey=your-project-key
-                    """
+                withSonarQubeEnv('Your_SonarQube_Environment_Name') {
+                    sh 'npm run sonar-scanner' // Projenize uygun analiz komutunu kullanın
                 }
             }
-        }
-        
-        stage('Test') {
-            steps {
-                // Test komutları burada olur
-                sh 'make test' // Örnek bir test komutu
-            }
-        }
-        
-        stage('Deploy') {
-            steps {
-                // Uygulamayı dağıtma komutları burada olur
-                sh 'make deploy' // Örnek bir dağıtım komutu
-            }
-        }
-    }
-    
-    post {
-        success {
-            // Başarılı bir şekilde tamamlandığında yapılacaklar
-            // Örneğin bildirim gönderme
-        }
-        
-        failure {
-            // Başarısız olduğunda yapılacaklar
-            // Örneğin hata bildirimi
         }
     }
 }
