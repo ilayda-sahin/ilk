@@ -1,48 +1,39 @@
-pipeline {
-    agent any
-    
-    stages {
-        stage('Checkout') {
+ pipeline {
+        agent none
+        stages {
+          stage("build & SonarQube analysis") {
+            agent any
             steps {
-                // Kod deposundan kodu çek
-                checkout scm
+              withSonarQubeEnv('My SonarQube Server') {
+                sh 'mvn clean package sonar:sonar'
+              }
             }
+          }
+          stage("Quality Gate") {
+            steps {
+              timeout(time: 1, unit: 'HOURS') {
+                waitForQualityGate abortPipeline: true
+              }
+            }
+          }
         }
+      }
+      
+Example using scripted pipeline:
 
-        stage('Install Grype') {
-            steps {
-                script {
-                    try {
-                        sh 'curl -sSfL https://get.grype.io | sudo sh'
-                    } catch (Exception e) {
-                        error "Grype kurulumu sırasında bir hata oluştu: ${e.message}"
-                    }
-                }
-            }
-        }
+      stage("build & SonarQube analysis") {
+          node {
+              withSonarQubeEnv('My SonarQube Server') {
+                 sh 'mvn clean package sonar:sonar'
+              }
+          }
+      }
 
-        stage('Scan for Vulnerabilities') {
-            steps {
-                script {
-                    def grypeOutput = sh(script: 'grype -r .', returnStatus: true)
-                    if (grypeOutput != 0) {
-                        error "Grype taraması başarısız oldu. Hata kodu: ${grypeOutput}"
-                    }
-                }
-            }
-        }
-    }
-    
-    post {
-        always {
-            // Tarama sonuçlarını kaydetmek için gerekli adımlar
-            script {
-                try {
-                    archiveArtifacts artifacts: 'grype-results.json', allowEmptyArchive: true
-                } catch (Exception e) {
-                    error "Tarama sonuçları arşivlenirken bir hata oluştu: ${e.message}"
-                }
-            }
-        }
-    }
-}
+      stage("Quality Gate"){
+          timeout(time: 1, unit: 'HOURS') {
+              def qg = waitForQualityGate()
+              if (qg.status != 'OK') {
+                  error "Pipeline aborted due to quality gate failure: ${qg.status}"
+              }
+          }
+      }
