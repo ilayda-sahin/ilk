@@ -1,37 +1,39 @@
 pipeline {
     agent any
-
+    
     stages {
-        stage('Checkout SCM') {
+        stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-
-        stage('Security Scan with Grype') {
+        
+        stage('Build') {
             steps {
-                script {
-                    sh "grype --version"  // Grype sürümünü kontrol etmek için
-
-                    def scanResults = sh(script: "grype -o json .", returnStdout: true).trim()
-                    writeFile file: 'grype-results.json', text: scanResults
-                }
+                sh 'echo "Building the project..."'
             }
         }
-
-        stage('Publish Grype Results') {
+        
+        stage('Test') {
             steps {
-                script {
-                    def vulnerabilities = readJSON file: 'grype-results.json'
-
-                    if (vulnerabilities) {
-                        echo "Güvenlik açıkları bulundu!"
-                        echo vulnerabilities.toString()
-                    } else {
-                        echo 'Güvenlik açığı bulunamadı.'
-                    }
-                }
+                sh 'echo "Running tests..."'
             }
+        }
+        
+        stage('Deploy') {
+            steps {
+                sh 'echo "Deploying the project..."'
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo 'The pipeline has succeeded!'
+        }
+        
+        failure {
+            echo 'The pipeline has failed. Please check the build logs.'
         }
     }
 }
