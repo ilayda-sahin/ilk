@@ -2,34 +2,35 @@ pipeline {
     agent any
 
     environment {
-        // SonarQube sunucusu yapılandırmaları
-        SONARQUBE_SERVER = credentials('sonarqube') // Jenkins'te tanımlanan SonarQube sunucusunun kimlik doğrulama bilgileri
-        SONARQUBE_PROJECT_KEY = 'yeni' // SonarQube'da tanımlanan projenin anahtarı
-        SONARQUBE_PROJECT_NAME = 'yeni' // SonarQube'da tanımlanan projenin adı
-        SONARQUBE_PROJECT_VERSION = '4.7.0.2747' // Proje sürümü
+        SONARQUBE_HOME = tool name: 'scanner', type: 'hudson.plugins.sonar.MsBuildSQRunnerInstallation'
+        // SonarQube sunucu bilgileri
+        SONARQUBE_SERVER = 'http://20.127.193.12:9000'
+        SONARQUBE_PROJECT_KEY = 'yeni'
+        SONARQUBE_PROJECT_NAME = 'yeni'
+        SONARQUBE_PROJECT_VERSION = '4.7.0.2747'
+        SONARQUBE_SERVER_USERTOKEN = credentials('sqp_7f611f51c128f2f418a42eb857ca43bbda5dffef')
     }
 
     stages {
         stage('Checkout') {
             steps {
+                // Kodu proje kök dizinine çıkar
                 checkout scm
             }
         }
 
-        stage('Build and Scan') {
+        stage('Build and Analyze') {
             steps {
                 script {
-                    // SonarQube tarama işlemi
-                    def scannerHome = tool name: 'SonarQube', type: 'hudson.plugins.sonar.MsBuildSQRunnerInstallation'
+                    def scannerHome = tool name: 'scanner', type: 'hudson.plugins.sonar.MsBuildSQRunnerInstallation'
                     def scannerCmd = "${scannerHome}/bin/sonar-scanner"
 
                     sh """
-                        ${scannerCmd} -Dsonar.projectKey=${SONARQUBE_PROJECT_KEY} \
-                            -Dsonar.projectName='${SONARQUBE_PROJECT_NAME}' \
-                            -Dsonar.projectVersion=${SONARQUBE_PROJECT_VERSION} \
-                            -Dsonar.host.url=${SONARQUBE_SERVER} \
-                            -Dsonar.login=${SONARQUBE_SERVER_USERTOKEN} \
-                            -Dsonar.java.binaries=target/classes
+                        ${scannerCmd} -Dsonar.projectKey=${yeni} \
+                                      -Dsonar.projectName='${yeni}' \
+                                      -Dsonar.projectVersion=${4.7.0.2747} \
+                                      -Dsonar.host.url=${http://20.127.193.12:9000} \
+                                      -Dsonar.login=${sqp_7f611f51c128f2f418a42eb857ca43bbda5dffef}
                     """
                 }
             }
@@ -41,6 +42,12 @@ pipeline {
             script {
                 // Tarama başarılı olduğunda yapılacak işlemler
                 echo "SonarQube scan completed successfully."
+            }
+        }
+        failure {
+            script {
+                // Tarama başarısız olduğunda yapılacak işlemler
+                echo "SonarQube scan failed. Check the logs for details."
             }
         }
     }
