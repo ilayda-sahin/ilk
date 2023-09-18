@@ -12,7 +12,7 @@ pipeline {
             steps {
                 // Node.js ve npm'i yükle
                 script {
-                    def nodeVersion = '14.17.6' // Kullanmak istediğiniz Node.js sürümünü belirtin
+                    def nodeVersion = '20.6.1' // Kullanmak istediğiniz Node.js sürümünü belirtin
                     def npmVersion = '6.14.15' // Kullanmak istediğiniz npm sürümünü belirtin
 
                     def home = tool name: 'NodeJS', type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
