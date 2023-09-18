@@ -1,52 +1,37 @@
 pipeline {
-    agent any // Herhangi bir Jenkins ajanında çalıştırılabilir
+    agent any
 
     stages {
-        stage('Hazırlık') {
+        stage('Checkout SCM') {
             steps {
-                // Node.js ve npm'i yükle
-                sh 'curl -sL https://deb.nodesource.com/setup_14.x | bash -'
-                sh 'apt-get install -y nodejs'
-
-                // Yarn'ı yükle (isteğe bağlı)
-                sh 'npm install -g yarn'
-            }
-        }
-
-        stage('Kod Al') {
-            steps {
-                // Proje repoyu al
                 checkout scm
             }
         }
 
-        stage('Bağımlılıkları Yükle') {
+        stage('Security Scan with Grype') {
             steps {
-                // Bağımlılıkları yükle (örneğin, npm veya yarn kullanabilirsiniz)
-                sh 'npm install'
-            }
-        }
+                script {
+                    sh "grype --version"  // Grype sürümünü kontrol etmek için
 
-        stage('Testleri Çalıştır') {
-            steps {
-                // Testleri çalıştır (örneğin, npm test veya yarn test kullanabilirsiniz)
-                sh 'npm test'
-            }
-        }
-
-        stage('Kod Taraması') {
-            steps {
-                // SonarQube ile kod taraması yap
-                withSonarQubeEnv('sonarqube') {
-                    sh 'canner' // SonarQube Scanner'ı projenizin gereksinimlerine göre yapılandırın
+                    def scanResults = sh(script: "grype -o json .", returnStdout: true).trim()
+                    writeFile file: 'grype-results.json', text: scanResults
                 }
             }
         }
-    }
 
-    post {
-        failure {
-            // Kod taraması veya testler başarısızsa ne yapılacağını burada belirleyebilirsiniz
+        stage('Publish Grype Results') {
+            steps {
+                script {
+                    def vulnerabilities = readJSON file: 'grype-results.json'
+
+                    if (vulnerabilities) {
+                        echo "Güvenlik açıkları bulundu!"
+                        echo vulnerabilities.toString()
+                    } else {
+                        echo 'Güvenlik açığı bulunamadı.'
+                    }
+                }
+            }
         }
     }
 }
