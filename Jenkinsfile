@@ -28,7 +28,7 @@ pipeline {
                     sh """
                         ${scannerCmd} -Dsonar.projectKey=${yeni} \
                                       -Dsonar.projectName='${yeni}' \
-                                      -Dsonar.projectVersion=${1.0} \
+                                      -Dsonar.projectVersion=${1.0git} \
                                       -Dsonar.host.url=${http://20.127.193.12:9000} \
                                       -Dsonar.login=${sqp_7f611f51c128f2f418a42eb857ca43bbda5dffef}
                     """
