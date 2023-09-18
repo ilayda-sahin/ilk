@@ -7,7 +7,7 @@ pipeline {
         SONARQUBE_SERVER = 'http://20.127.193.12:9000'
         SONARQUBE_PROJECT_KEY = 'yeni'
         SONARQUBE_PROJECT_NAME = 'yeni'
-        SONARQUBE_PROJECT_VERSION = '4.7.0.2747'
+        SONARQUBE_PROJECT_VERSION = '1.0'
         SONARQUBE_SERVER_USERTOKEN = credentials('sqp_7f611f51c128f2f418a42eb857ca43bbda5dffef')
     }
 
@@ -28,7 +28,7 @@ pipeline {
                     sh """
                         ${scannerCmd} -Dsonar.projectKey=${yeni} \
                                       -Dsonar.projectName='${yeni}' \
-                                      -Dsonar.projectVersion=${4.7.0.2747} \
+                                      -Dsonar.projectVersion=${1.0} \
                                       -Dsonar.host.url=${http://20.127.193.12:9000} \
                                       -Dsonar.login=${sqp_7f611f51c128f2f418a42eb857ca43bbda5dffef}
                     """
